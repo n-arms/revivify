@@ -7,7 +7,8 @@ A library that aims to reduce code duplication in wpilib projects
 - abstract over code that is repeated between years
 
 ### non-goals
-- provide a general high-level abstraction over wpilib. Revivify will focus on making common tasks easier rather than reducing boilerplate for all wpilib code
+- provide a general high-level abstraction over wpilib. 
+Revivify will focus on making common tasks easier rather than reducing boilerplate for all wpilib code
 
 ### data
 A quick `find . -type f -exec wc -l {} \; | sort -rn | head` shows that the largest files (by number of lines) in [arctos's 2022 codebase](https://github.com/arctos6135/frc-2022-updated) are:
@@ -26,7 +27,8 @@ A quick `find . -type f -exec wc -l {} \; | sort -rn | head` shows that the larg
 These can be broken down into 5 categories:
 
 #### RobotContainer
-This file is entirely too big. It manages three things, each of which should probably be its own file:
+This file is entirely too big. 
+It manages three things, each of which should probably be its own file:
 1. Setting up relevant commands and subsystems
 2. Configuring Shuffleboard
 3. Configuring buttons on XboxController objects
@@ -34,16 +36,21 @@ This file is entirely too big. It manages three things, each of which should pro
 Point 1. is the primary feature of RobotContainer, but numbers 2 and 3 contain enough logic that they should be abstracted out into (hopefully reusable) classes
 
 #### Drivetrain
-This file contains the code for the drivetrain subsystem. It seems unlikely that arctos will use a non-tank drive in the near future so it makes sense to put a generic tank drive implementation into revivify.
+This file contains the code for the drivetrain subsystem. 
+It seems unlikely that arctos will use a non-tank drive in the near future so it makes sense to put a generic tank drive implementation into revivify.
 
 #### Limelight
-This file contains logic for streaming limelight data to the dashboard. We could just copy and paste it into revivify, it is already very generic and reusable. The primary reason it is so long isn't the complexity of code, but rather the number of comments.
+This file contains logic for streaming limelight data to the dashboard. 
+We could just copy and paste it into revivify, it is already very generic and reusable. 
+The primary reason it is so long isn't the complexity of code, but rather the number of comments.
 
 #### Auto Commands
-[The files](https://github.com/Arctos6135/frc-2022-updated/tree/master/src/main/java/frc/robot/commands/auto/routines) contain logic for autonomous commands. Autonomous is the meat and potatoes of FRC code and changes every year, but it still seems like there is some boilerplate that can be abstracted away.
+[The files](https://github.com/Arctos6135/frc-2022-updated/tree/master/src/main/java/frc/robot/commands/auto/routines) contain logic for autonomous commands. 
+Autonomous is the meat and potatoes of FRC code and changes every year, but it still seems like there is some boilerplate that can be abstracted away.
 
 #### Shooter
-This file contains the code for the shooter subsystem. Shooters tend to be fairly similar, so it might be possible to include a generic shooter implementation in revivify, but it would have to be very basic and not very customizable and might not be worth the effort.
+This file contains the code for the shooter subsystem. 
+Shooters tend to be fairly similar, so it might be possible to include a generic shooter implementation in revivify, but it would have to be very basic and not very customizable and might not be worth the effort.
 
 ## features
 Based off of the largest, most duplicated code, revivify should include
@@ -53,3 +60,14 @@ Based off of the largest, most duplicated code, revivify should include
 - an abstraction to reduce common boilerplate in autonomous commands **(hard)**
 - potentially a generic shooter implementation **(easy)**
 
+### Shuffleboard
+Shuffleboard logic is always fairly complicated. 
+There are a number of `ShuffleboardTab` and `NetworkTableEntry` objects, which are manipulated with fairly complex logic.
+Instead of setting up the display logic in RobotContainer, robot code should make each individual subsystem reponsible for updating its own shuffleboard widgets.
+Each subsystem should recieve a `ShuffleboardTab` that it uses for all its shuffleboard needs.
+
+This approach has a pretty big advantage over RobotContainer Shuffleboard logic: seperation of concerns. 
+Shuffleboard logic often requires asking about the internal details of a running subsystem, and by shifting that logic into each subsystem, we don't need to expose those internal details.
+The Shuffleboard logic for Drivetrain is about 45 LOC. 
+Drivetrain itself contains around 10 LOC (32 if counting comments) that could be removed if we get rid of the getters and setters that external Shuffleboard logic uses.
+This means that despite the complexity that would be added to each individual subsystem, the net LOC would decrease and RobotContainer would contain less logic.
